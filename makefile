@@ -14,7 +14,7 @@ CLASS_FILES = $(patsubst $(SRC_DIR)/%.java, $(BIN_DIR)/%.class, $(JAVA_FILES))
 JAVAC_FLAGS = -d bin -sourcepath src
 
 # Main class
-MAIN_CLASS = serialAbelianSandpile.ParallelAutomatonSimulation
+MAIN_CLASS = serialAbelianSandpile.AutomatonSimulation
 
 # Default arguments (update these if needed)
 ARGS ?= input/65_by_65_all_4.csv output/65_by_65_all_4-serial.png  # Replace 'default_arguments' with your specific default arguments, if any

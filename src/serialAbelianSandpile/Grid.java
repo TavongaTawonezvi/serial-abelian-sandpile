@@ -5,13 +5,66 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.RecursiveTask;
 
 //This class is for the grid for the Abelian Sandpile cellular automaton
-public class Grid {
+public class Grid{
 	private int rows, columns;
 	private int [][] grid; //grid 
 	private int [][] updateGrid;//grid for next time step
-    
+	private static final int THRESHOLD = 100;
+	static final ForkJoinPool fjp = new ForkJoinPool();
+
+
+	private class  ForkGrid extends RecursiveTask<Boolean>{
+
+		private int startRow;
+		private int endRow;
+		private int[][] grid;
+		private int[][] updateGrid;
+
+		public ForkGrid(int[][] grid, int[][] updateGrid, int startRow, int endRow) {
+			this.grid = grid;
+			this.updateGrid = updateGrid;
+			this.startRow = startRow;
+			this.endRow = endRow;
+		}
+
+
+		public Boolean compute(){
+			if (endRow - startRow < THRESHOLD) {
+				boolean change=false;
+				//do not update border
+				for( int i = startRow; i<endRow-1; i++ ) {
+					for( int j = 1; j<columns-1; j++ ) {
+						updateGrid[i][j] = (grid[i][j] % 4) +
+								(grid[i-1][j] / 4) +
+								grid[i+1][j] / 4 +
+								grid[i][j-1] / 4 +
+								grid[i][j+1] / 4;
+						if (grid[i][j]!=updateGrid[i][j]) {
+							change=true;
+						}
+					}} //end nested for
+				if (change) { nextTimeStep();}
+				return change;
+			}
+			else{
+				ForkGrid top = new ForkGrid(grid, updateGrid, startRow, endRow);
+				ForkGrid bottom = new ForkGrid(grid, updateGrid, startRow, endRow);
+				top.fork();
+				Boolean b = bottom.compute();
+				Boolean t = top.join();
+				return b || t;
+
+			}
+		}
+
+
+	}
+
+
 	public Grid(int w, int h) {
 		rows = w+2; //for the "sink" border
 		columns = h+2; //for the "sink" border
@@ -81,6 +134,9 @@ public class Grid {
 	boolean update() {
 		boolean change=false;
 		//do not update border
+		ForkJoinPool fjp = new ForkJoinPool();
+		ForkGrid forkGrid= new ForkGrid(this.grid, this.updateGrid, rows + 1, columns + 1);
+		fjp.invoke(forkGrid);
 		for( int i = 1; i<rows-1; i++ ) {
 			for( int j = 1; j<columns-1; j++ ) {
 				updateGrid[i][j] = (grid[i][j] % 4) + 
