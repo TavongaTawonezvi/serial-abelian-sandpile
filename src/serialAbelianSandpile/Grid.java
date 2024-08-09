@@ -13,7 +13,6 @@ public class Grid{
 	private int rows, columns;
 	private int [][] grid; //grid 
 	private int [][] updateGrid;//grid for next time step
-	private static final int THRESHOLD = 100;
 	static final ForkJoinPool fjp = new ForkJoinPool();
 
 
@@ -23,6 +22,7 @@ public class Grid{
 		private int endRow;
 		private int[][] grid;
 		private int[][] updateGrid;
+		private static final int THRESHOLD = 100;
 
 		public ForkGrid(int[][] grid, int[][] updateGrid, int startRow, int endRow) {
 			this.grid = grid;
@@ -36,8 +36,8 @@ public class Grid{
 			if (endRow - startRow < THRESHOLD) {
 				boolean change=false;
 				//do not update border
-				for( int i = startRow; i<endRow-1; i++ ) {
-					for( int j = 1; j<columns-1; j++ ) {
+				for( int i = startRow; i<endRow; i++ ) {
+					for( int j = 1; j<columns - 1; j++ ) {
 						updateGrid[i][j] = (grid[i][j] % 4) +
 								(grid[i-1][j] / 4) +
 								grid[i+1][j] / 4 +
@@ -47,12 +47,13 @@ public class Grid{
 							change=true;
 						}
 					}} //end nested for
-				if (change) { nextTimeStep();}
+//				if (change) { nextTimeStep();}
 				return change;
 			}
 			else{
-				ForkGrid top = new ForkGrid(grid, updateGrid, startRow, endRow);
-				ForkGrid bottom = new ForkGrid(grid, updateGrid, startRow, endRow);
+				int midRow = (startRow + endRow) / 2;
+				ForkGrid top = new ForkGrid(grid, updateGrid, startRow, midRow);
+				ForkGrid bottom = new ForkGrid(grid, updateGrid, midRow, endRow);
 				top.fork();
 				Boolean b = bottom.compute();
 				Boolean t = top.join();
@@ -134,20 +135,10 @@ public class Grid{
 	boolean update() {
 		boolean change=false;
 		//do not update border
-		ForkJoinPool fjp = new ForkJoinPool();
-		ForkGrid forkGrid= new ForkGrid(this.grid, this.updateGrid, rows + 1, columns + 1);
+		ForkGrid forkGrid= new ForkGrid(this.grid, this.updateGrid, 1 , getRows() +1);
 		fjp.invoke(forkGrid);
-		for( int i = 1; i<rows-1; i++ ) {
-			for( int j = 1; j<columns-1; j++ ) {
-				updateGrid[i][j] = (grid[i][j] % 4) + 
-						(grid[i-1][j] / 4) +
-						grid[i+1][j] / 4 +
-						grid[i][j-1] / 4 + 
-						grid[i][j+1] / 4;
-				if (grid[i][j]!=updateGrid[i][j]) {  
-					change=true;
-				}
-		}} //end nested for
+		change = forkGrid.join();
+
 	if (change) { nextTimeStep();}
 	return change;
 	}
@@ -158,7 +149,7 @@ public class Grid{
 	void printGrid( ) {
 		int i,j;
 		//not border is not printed
-		System.out.printf("Grid:\n");
+//		System.out.printf("Grid:\n");
 		System.out.printf("+");
 		for( j=1; j<columns-1; j++ ) System.out.printf("  --");
 		System.out.printf("+\n");

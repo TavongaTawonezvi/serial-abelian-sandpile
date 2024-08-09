@@ -101,7 +101,6 @@ public class ParallelGrid extends RecursiveAction{
             right.compute();
             left.join();
 
-            return left || right;
         }
     }
 
