@@ -3,6 +3,9 @@ package serialAbelianSandpile;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import javax.imageio.ImageIO;
 /* Serial  program to simulate an Abelian Sandpile cellular automaton
  * This is the reference sequential version (Do not modify this code)
  * Michelle Kuttel 2024, University of Cape Town
@@ -53,8 +56,47 @@ class AutomatonSimulation{
 	        }
 	        return array;
 	    }
-	 
-    public static void main(String[] args) throws IOException  {
+
+	public static void imageComparison(){
+		try {
+			BufferedImage serialImg = ImageIO.read(new File("output/65_by_65_all_4_stable_solution.png"));
+			BufferedImage parallelImg = ImageIO.read(new File("output/65_by_65_all_4-parallel.png"));
+
+			boolean res = compareImages(serialImg, parallelImg);
+			if (res) {
+				System.out.println("Image is valid");
+			}
+			else {
+				System.out.println("Image is not the same as serial version");
+			}
+
+		}catch(IOException e ) {
+			e.printStackTrace();
+		}
+	}
+
+	public static boolean compareImages(BufferedImage img1, BufferedImage img2) {
+
+		if(img1.getWidth() != img2.getWidth() || img1.getHeight() != img2.getHeight()) {
+			return false;
+		}
+
+		for (int y = 0; y < img1.getHeight(); y++) {
+			for(int x = 0; x < img1.getWidth(); x++) {
+				int pixel1 = img1.getRGB(x, y);
+				int pixel2 = img2.getRGB(x, y);
+				if (pixel1 != pixel2) {
+					return false;
+				}
+			}
+		}
+
+		return true;
+
+	}
+
+
+	public static void main(String[] args) throws IOException  {
 
     	Grid simulationGrid;  //the cellular automaton grid
     	  	
@@ -86,10 +128,10 @@ class AutomatonSimulation{
 	    		counter++;
 	    	}
    		tock(); //end timer
-   		
         System.out.println("Simulation complete, writing image...");
     	simulationGrid.gridToImage(outputFileName); //write grid as an image - you must do this.
-    	//Do NOT CHANGE below!
+		imageComparison();
+		//Do NOT CHANGE below!
     	//simulation details - you must keep these lines at the end of the output in the parallel versions      	System.out.printf("\t Rows: %d, Columns: %d\n", simulationGrid.getRows(), simulationGrid.getColumns());
 		System.out.printf("Number of steps to stable state: %d \n",counter);
 		System.out.printf("Time: %d ms\n",endTime - startTime );			/*  Total computation time */		

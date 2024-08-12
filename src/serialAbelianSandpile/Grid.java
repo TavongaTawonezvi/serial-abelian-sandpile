@@ -14,30 +14,38 @@ public class Grid{
 	private int [][] grid; //grid 
 	private int [][] updateGrid;//grid for next time step
 	static final ForkJoinPool fjp = new ForkJoinPool();
+	private int THRESHOLD;
 
+	public int determineOptimalThreshold() {
+		int processors = Runtime.getRuntime().availableProcessors();
+		int totalCells = rows;
+		int desiredTaskCount = processors * 4;
+		int threshold = totalCells / desiredTaskCount;
+		return threshold;
+	}
 
 	private class  ForkGrid extends RecursiveTask<Boolean>{
 
 		private int startRow;
 		private int endRow;
-		private int[][] grid;
-		private int[][] updateGrid;
-		private static final int THRESHOLD = 100;
+		private int startCol;
+		private int endCol;
 
-		public ForkGrid(int[][] grid, int[][] updateGrid, int startRow, int endRow) {
-			this.grid = grid;
-			this.updateGrid = updateGrid;
+
+		public ForkGrid( int startRow, int endRow, int startCol, int endCol) {
+
 			this.startRow = startRow;
 			this.endRow = endRow;
+			this.startCol = startCol;
+			this.endCol = endCol;
 		}
 
-
 		public Boolean compute(){
-			if (endRow - startRow < THRESHOLD) {
+		if ((endRow - startRow)  < THRESHOLD) {
 				boolean change=false;
 				//do not update border
 				for( int i = startRow; i<endRow; i++ ) {
-					for( int j = 1; j<columns - 1; j++ ) {
+					for( int j = startCol; j<endCol; j++ ) {
 						updateGrid[i][j] = (grid[i][j] % 4) +
 								(grid[i-1][j] / 4) +
 								grid[i+1][j] / 4 +
@@ -51,13 +59,24 @@ public class Grid{
 				return change;
 			}
 			else{
-				int midRow = (startRow + endRow) / 2;
-				ForkGrid top = new ForkGrid(grid, updateGrid, startRow, midRow);
-				ForkGrid bottom = new ForkGrid(grid, updateGrid, midRow, endRow);
-				top.fork();
-				Boolean b = bottom.compute();
-				Boolean t = top.join();
-				return b || t;
+					int midRow = (startRow + endRow) / 2;
+					int midCol = (startCol + endCol) / 2;
+
+					ForkGrid topLeft = new ForkGrid(startRow, midRow, startCol, midCol);
+					ForkGrid topRight = new ForkGrid( startRow, midRow, midCol, endCol);
+					ForkGrid bottomLeft = new ForkGrid(midRow, endRow, startCol, midCol);
+					ForkGrid bottomRight = new ForkGrid(midRow, endRow, midCol, endCol);
+
+					topLeft.fork();
+					topRight.fork();
+					bottomLeft.fork();
+
+					Boolean bRight = bottomRight.compute();
+					Boolean tLeft = topLeft.join();
+					Boolean tRight = topRight.join();
+					Boolean bLeft = bottomLeft.join();
+
+					return bRight|| tLeft || tRight || bLeft;
 
 			}
 		}
@@ -71,6 +90,7 @@ public class Grid{
 		columns = h+2; //for the "sink" border
 		grid = new int[this.rows][this.columns];
 		updateGrid=new int[this.rows][this.columns];
+		this.THRESHOLD = determineOptimalThreshold();
 		/* grid  initialization */
 		for(int i=0; i<this.rows; i++ ) {
 			for( int j=0; j<this.columns; j++ ) {
@@ -135,9 +155,9 @@ public class Grid{
 	boolean update() {
 		boolean change=false;
 		//do not update border
-		ForkGrid forkGrid= new ForkGrid(this.grid, this.updateGrid, 1 , getRows() +1);
-		fjp.invoke(forkGrid);
-		change = forkGrid.join();
+		ForkGrid forkGridTask = new ForkGrid(1, getRows() + 1, 1, getColumns() + 1);
+		fjp.invoke(forkGridTask);
+		change = forkGridTask.join();
 
 	if (change) { nextTimeStep();}
 	return change;
