@@ -17,7 +17,7 @@ JAVAC_FLAGS = -d bin -sourcepath src
 MAIN_CLASS = serialAbelianSandpile.AutomatonSimulation
 
 # Default arguments (update these if needed)
-ARGS ?= input/65_by_65_all_4.csv output/65_by_65_all_4-serial.png  # Replace 'default_arguments' with your specific default arguments, if any
+ARGS ?= input/1024_by_1024_all_4.csv output/1024_by_1024_all_4.png  # Replace 'default_arguments' with your specific default arguments, if any
 
 # Targets
 .PHONY: all clean run directories

@@ -14,13 +14,20 @@ public class Grid{
 	private int [][] grid; //grid 
 	private int [][] updateGrid;//grid for next time step
 	static final ForkJoinPool fjp = new ForkJoinPool();
-	private int THRESHOLD;
+	private final int THRESHOLD =100;
 
 	public int determineOptimalThreshold() {
 		int processors = Runtime.getRuntime().availableProcessors();
 		int totalCells = rows;
 		int desiredTaskCount = processors * 4;
 		int threshold = totalCells / desiredTaskCount;
+		int minThreshold = 50; // Set a minimum threshold
+
+		if (threshold < minThreshold) {
+			threshold = minThreshold;
+		}
+
+		//System.out.println("Threshold: " + threshold);
 		return threshold;
 	}
 
@@ -90,7 +97,6 @@ public class Grid{
 		columns = h+2; //for the "sink" border
 		grid = new int[this.rows][this.columns];
 		updateGrid=new int[this.rows][this.columns];
-		this.THRESHOLD = determineOptimalThreshold();
 		/* grid  initialization */
 		for(int i=0; i<this.rows; i++ ) {
 			for( int j=0; j<this.columns; j++ ) {
