@@ -9,6 +9,7 @@ import javax.imageio.ImageIO;
 /* Serial  program to simulate an Abelian Sandpile cellular automaton
  * This is the reference sequential version (Do not modify this code)
  * Michelle Kuttel 2024, University of Cape Town
+ * Modified by Tavonga Tawonezvi TWNTAV001
  * Adapted from "Abelian Sandpile Simulation"
  * Peachy Parallel Assignments (EduPar 2022)" 
  * developed by Bu\:cker, Casanova and Da Silva  (∗Institute for Computer Science, Friedrich Schiller University Jena, Jena, Germany)

@@ -1,4 +1,6 @@
 //Copyright M.M.Kuttel 2024 CSC2002S, UCT
+// Modified by Tavonga Tawonezvi TWNTAV001
+
 package serialAbelianSandpile;
 
 import java.awt.image.BufferedImage;
@@ -14,23 +16,23 @@ public class Grid{
 	private int [][] grid; //grid 
 	private int [][] updateGrid;//grid for next time step
 	static final ForkJoinPool fjp = new ForkJoinPool();
-	private final int THRESHOLD =100;
+	private final int THRESHOLD = 100;
 
-	public int determineOptimalThreshold() {
-		int processors = Runtime.getRuntime().availableProcessors();
-		int totalCells = rows;
-		int desiredTaskCount = processors * 4;
-		int threshold = totalCells / desiredTaskCount;
-		int minThreshold = 50; // Set a minimum threshold
-
-		if (threshold < minThreshold) {
-			threshold = minThreshold;
-		}
-
-		//System.out.println("Threshold: " + threshold);
-		return threshold;
-	}
-
+//	public int determineOptimalThreshold() {
+//		int processors = Runtime.getRuntime().availableProcessors();
+//		int totalCells = rows;
+//		int desiredTaskCount = processors * 4;
+//		int threshold = totalCells / desiredTaskCount;
+//		int minThreshold = 50; // Set a minimum threshold
+//
+//		if (threshold < minThreshold) {
+//			threshold = minThreshold;
+//		}
+//
+//		//System.out.println("Threshold: " + threshold);
+//		return threshold;
+//	}
+	//inner class for ForkJoin computation
 	private class  ForkGrid extends RecursiveTask<Boolean>{
 
 		private int startRow;
@@ -66,6 +68,7 @@ public class Grid{
 				return change;
 			}
 			else{
+				//split the grid into four quadrants
 					int midRow = (startRow + endRow) / 2;
 					int midCol = (startCol + endCol) / 2;
 
@@ -73,16 +76,16 @@ public class Grid{
 					ForkGrid topRight = new ForkGrid( startRow, midRow, midCol, endCol);
 					ForkGrid bottomLeft = new ForkGrid(midRow, endRow, startCol, midCol);
 					ForkGrid bottomRight = new ForkGrid(midRow, endRow, midCol, endCol);
-
+					//fork the tasks
 					topLeft.fork();
 					topRight.fork();
 					bottomLeft.fork();
-
+					//compute the bottom right quadrant
 					Boolean bRight = bottomRight.compute();
 					Boolean tLeft = topLeft.join();
 					Boolean tRight = topRight.join();
 					Boolean bLeft = bottomLeft.join();
-
+					//return the result
 					return bRight|| tLeft || tRight || bLeft;
 
 			}
@@ -161,7 +164,9 @@ public class Grid{
 	boolean update() {
 		boolean change=false;
 		//do not update border
+		//construct a ForkJoinPool and start parallel computation
 		ForkGrid forkGridTask = new ForkGrid(1, getRows() + 1, 1, getColumns() + 1);
+		//invoke the task
 		fjp.invoke(forkGridTask);
 		change = forkGridTask.join();
 
